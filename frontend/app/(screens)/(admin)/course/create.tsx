@@ -59,16 +59,14 @@ const AdminCoursePage = () => {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.container}
             >
-                <TouchableOpacity style={styles.closeButton} onPress={handleLogout}>
-                    <Text style={styles.closeButtonText}>X</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.updateButton} onPress={() => router.push('/(screens)/(admin)/course/update')}>
-                    <Text style={styles.updateButtonText}>Update</Text>
-                </TouchableOpacity>
                 <ScrollView contentContainerStyle={styles.scrollView}>
-                    <Text style={styles.header}>Tạo khóa học mới</Text>
-
+                    <View style={styles.headerContainer}>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Text style={styles.headerButton}>Hủy</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Tạo khóa học</Text>
+                    <View style={{ width: 40 }} />
+                </View>
                     <View style={styles.form}>
                         <Text style={styles.label}>URL ảnh bìa (Thumbnail)</Text>
                         <TextInput
@@ -122,66 +120,49 @@ const styles = StyleSheet.create({
   flex: 1,
   backgroundColor: '#F7F8FA',
  },
+ headerContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "#E0E0E0",
+    },
+    headerTitle : {
+        fontSize: 17,
+        fontWeight: "600",
+    },
  container: {
   flex: 1,
  },
 
- closeButton: {
-    position: 'absolute',
-    top: 65,
-    left: 20,
-    zIndex: 1,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
- },
-
- closeButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
- },
-  updateButton: {
-    position: 'absolute',
-    top: 65,
-    right: 20,
-    zIndex: 1,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
- },
-
- updateButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
- },
+ headerButton: {
+        fontSize: 16,
+        color: "#007AFF",
+},
 
  scrollView: {
-  flexGrow: 1,
+    marginTop: 20,
   padding: 20,
-  paddingTop: 60
  },
- header: {
+ pageTitle: {
   fontSize: 26,
   fontWeight: 'bold',
   marginBottom: 24,
   textAlign: 'center',
   color: '#333',
  },
- form: {
-  marginBottom: 20,
- },
- label: {
-  fontSize: 16,
-  fontWeight: '600',
-  marginBottom: 8,
-  color: '#495057',
- },
+    form: {
+        marginTop: 20,
+        marginBottom: 20,
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 8,
+        color: '#495057',
+    },
  input: {
   borderWidth: 1,
   borderColor: '#CED4DA',

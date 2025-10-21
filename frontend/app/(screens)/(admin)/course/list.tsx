@@ -1,4 +1,5 @@
-import { useCourse } from "@/context/CourseContext"; // 🔹 Chỉnh lại đường dẫn đúng với project của bạn
+import { useAuth } from "@/context/AuthContext";
+import { useCourse } from "@/context/CourseContext";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import {
@@ -17,11 +18,17 @@ import {
 
 const AdminListPage = () => {
     const { courses, isLoading, refreshCourses, deleteCourse } = useCourse();
+    const { logout } = useAuth();
 
     // --- Tự động tải danh sách khi vào trang ---
     useEffect(() => {
         refreshCourses();
     }, []);
+
+    const handleLogout = async () => {
+        await logout();
+        router.replace("/(screens)/(stack)/login")
+    }
 
     // --- Hàm xử lý xóa khóa học ---
     const handleDelete = (id) => {
@@ -56,6 +63,13 @@ const AdminListPage = () => {
                             style={styles.createButtonText}
                             onPress={() => router.push("/(screens)/(admin)/course/create")}
                             >Tạo khóa học</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.logoutButton}
+                        onPress={handleLogout}
+                    > 
+                        <Text style={styles.logoutButtonText}>Đăng xuất</Text>
                     </TouchableOpacity>
                     {isLoading ? (
                         <ActivityIndicator size="large" color="#007AFF" />
@@ -93,7 +107,10 @@ const AdminListPage = () => {
                                     <TouchableOpacity
                                         style={[styles.button, styles.updateBtn]}
                                         onPress={() =>
-                                            Alert.alert("Update", `Sửa: ${course.name}`)
+                                            router.push({
+                                                pathname: "/(screens)/(admin)/course/update",
+                                                params: { id: course._id },
+                                            })
                                         }
                                     >
                                         <Text style={styles.buttonText}>Sửa</Text>
@@ -126,6 +143,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scroll: {
+        paddingTop: 40,
         padding: 16,
     },
     title: {
@@ -185,12 +203,15 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     createButton: {
-        backgroundColor:"#8e3338ff",
+        backgroundColor: "#8e3338ff",
         borderRadius: 8,
+        padding: 12,
+        marginBottom: 10,
     },
     createButtonText: {
         color: "#fff",
         fontWeight: "600",
+        textAlign: "center",
     },
     thumbnail: {
         width: '100%',
@@ -198,5 +219,18 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 10,
         resizeMode: 'cover',
+    },
+
+    logoutButton: {
+        backgroundColor: "#BDBDBD",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 20,
+    },
+
+    logoutButtonText: {
+        color: "#000",
+        fontWeight: "600",
+        textAlign: "center",
     }
 });
