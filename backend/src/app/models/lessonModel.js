@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 
+const STATUS = ['IN_PROGRESS', 'COMPLETED'];
+
 const LessonSchema = new mongoose.Schema({
   nameLesson:   { type: String, required: true },
   linkVid:      { type: String, required: true },
   target:       { type: String },
-  duration:     { type: Number, default: 0 },
+  status:       { type: Number, enum: STATUS, default: 'IN_PROGRESS' },
   course:       { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true }
 }, { timestamps: true });
 

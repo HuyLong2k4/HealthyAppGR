@@ -14,7 +14,7 @@ const _layoutTabs = () => {
                 title: 'Home',
                 tabBarIconName: 'home',
             }} />
-            <Tabs.Screen name='category' options={{
+            <Tabs.Screen name='courses' options={{
                 headerShown: false,
                 title: 'Program',
                 tabBarIconName: 'grid',

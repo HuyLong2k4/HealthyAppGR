@@ -26,7 +26,7 @@ const SetupInfor = () => {
     }
 
     try {
-      const res = await fetch(`http://192.168.0.229:5000/api/users/${user.id}`, {
+      const res = await fetch(`http://192.168.1.16:5000/api/users/${user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

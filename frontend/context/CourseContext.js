@@ -3,10 +3,26 @@ import { Alert } from "react-native";
 import { useAuth } from "./AuthContext";
 
 // --- Cấu hình ---
-const API_URL = 'http://192.168.0.229:5000/api'; 
+const API_URL = 'http://192.168.1.16:5000/api'; 
 
 // --- Tạo Context ---
 const CourseContext = createContext();
+
+/**
+ * Xử lý lỗi response một cách an toàn
+ * Cố gắng parse lỗi JSON, nếu thất bại, trả về text.
+ */
+const getErrorFromResponse = async (response) => {
+    try {
+        // Thử parse lỗi dưới dạng JSON (vd: { error: "Tin nhắn lỗi" })
+        const jsonError = await response.json();
+        return jsonError.error || "Lỗi không xác định từ server.";
+    } catch (e) {
+        // Nếu không phải JSON (vd: HTML lỗi 500), trả về text
+        const textError = await response.text();
+        return textError || `Lỗi ${response.status}: Server không phản hồi JSON.`;
+    }
+};
 
 export const CourseProvider = ({ children }) => {
     const [courses, setCourses] = useState([]);
@@ -26,12 +42,14 @@ export const CourseProvider = ({ children }) => {
                 },
             });
 
-            const data = await response.json();
-
+            // --- SỬA LỖI: Kiểm tra OK trước ---
             if (!response.ok) {
-                throw new Error(data.error || "Không thể tải danh sách khóa học.");
+                const errorMsg = await getErrorFromResponse(response);
+                throw new Error(errorMsg);
             }
             
+            // Chỉ parse JSON nếu response OK
+            const data = await response.json();
             setCourses(data); 
 
         } catch (error) {
@@ -67,12 +85,13 @@ export const CourseProvider = ({ children }) => {
                 body: JSON.stringify(courseData),
             });
 
-            const result = await response.json();
-
+            // --- SỬA LỖI: Kiểm tra OK trước ---
             if (!response.ok) {
-                throw new Error(result.error || "Tạo khóa học thất bại.");
+                const errorMsg = await getErrorFromResponse(response);
+                throw new Error(errorMsg || "Tạo khóa học thất bại.");
             }
             
+            const result = await response.json();
             setCourses(prev => [result, ...prev]);
             Alert.alert("Thành công", "Khóa học đã được tạo.");
             return true;
@@ -103,12 +122,13 @@ export const CourseProvider = ({ children }) => {
                 body: JSON.stringify(updateData),
             });
 
-            const result = await response.json();
-
+            // --- SỬA LỖI: Kiểm tra OK trước ---
             if (!response.ok) {
-                throw new Error(result.error || 'Cập nhật khóa học thất bại.');
+                const errorMsg = await getErrorFromResponse(response);
+                throw new Error(errorMsg || 'Cập nhật khóa học thất bại.');
             }
 
+            const result = await response.json();
             setCourses(prevCourses => 
                 prevCourses.map(c => c._id === courseId ? result : c)
             );
@@ -139,11 +159,16 @@ export const CourseProvider = ({ children }) => {
                 },
             });
 
+            // --- SỬA LỖI: Kiểm tra OK trước ---
             if (!response.ok) {
-                const result = await response.json();
-                throw new Error(result.error || 'Xóa khóa học thất bại.');
+                // DELETE có thể trả về lỗi JSON hoặc không
+                const errorMsg = await getErrorFromResponse(response);
+                throw new Error(errorMsg || 'Xóa khóa học thất bại.');
             }
 
+            // Nếu thành công (ví dụ: status 204 No Content),
+            // không cần response.json()
+            
             setCourses(prevCourses => 
                 prevCourses.filter(course => course._id !== courseId)
             );

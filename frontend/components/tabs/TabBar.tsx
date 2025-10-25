@@ -1,8 +1,7 @@
-import { View, Text, StyleSheet } from "react-native"
-import React from "react"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
+import React from "react"
+import { StyleSheet, View } from "react-native"
 import TabBarItem from "./TabBarItem"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 // TabBar có kiểu dữ liệu là BottomTabBarProps
 const TabBar : React.FC<BottomTabBarProps> = ({
@@ -58,7 +57,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         left: 0,
         right: 0,
-        bottom: 15,
+        bottom: 1,
         paddingVertical: 10,
         paddingHorizontal: 20,
         backgroundColor: "white",
