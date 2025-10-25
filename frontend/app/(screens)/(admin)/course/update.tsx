@@ -2,28 +2,28 @@ import { useCourse } from "@/context/CourseContext";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const AdminUpdatePage = () => {
-    // 1. Lấy ID từ URL (ví dụ: /admin/course/update/123)
+    
     const { id } = useLocalSearchParams();
 
     // 2. Lấy state và hàm từ Context
     const {
         courses,
-        isLoading: isContextLoading, // Đổi tên để tránh nhầm lẫn
+        isLoading: isContextLoading,
         updateCourse,
         deleteCourse,
         refreshCourses,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     },
     textArea: {
         height: 120,
-        textAlignVertical: "top", // Cho Android
+        textAlignVertical: "top", 
     },
     thumbnail: {
         width: "100%",
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     },
     // Nút
     submitButton: {
-        backgroundColor: "#8e3338ff", // Giống màu nút Create
+        backgroundColor: "#8e3338ff",
         padding: 14,
         borderRadius: 8,
         alignItems: "center",

@@ -12,6 +12,7 @@ const healthIndexRoutes = require('./app/routes/healthIndexRoutes');
 const healthInfoRoutes = require('./app/routes/healthInformationRoutes');
 const authRoutes = require('./app/routes/authRoutes');
 const deviceRoutes = require('./app/routes/deviceRoutes');
+const enrollmentRoutes = require('./app/routes/enrollmentRoutes');
 
 connectDB();
 
@@ -21,7 +22,6 @@ const PORT = process.env.PORT || 5000;
 
 app.use(morgan('combined'));
 app.use(express.json());
-
 
 app.get('/', (_, res) => res.send('Hello World!'));
 
@@ -36,7 +36,8 @@ app.use('/api/health-indices', healthIndexRoutes);
 app.use('/api/health-information', healthInfoRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/enrollments', enrollmentRoutes);
 
 app.listen(PORT, "0.0.0.0", () =>
-  console.log(`Server listening on http://192.168.0.229:${PORT}`)
+  console.log(`Server listening on http://192.168.1.16:${PORT}`)
 );

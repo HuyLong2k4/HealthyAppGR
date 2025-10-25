@@ -1,10 +1,16 @@
 import Feature from "@/components/stacks/Feature"
 import StatBox from "@/components/stacks/StatBox"
+import { useCourse } from "@/context/CourseContext"
 import { router } from "expo-router"
-import React from "react"
+import React, { useEffect } from "react"
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 const HomeScreen = () => {
+  const { refreshCourses } = useCourse();
+
+  useEffect(() => {
+          refreshCourses();
+      }, []);
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -87,7 +93,7 @@ bannerText: {
   fontWeight: "bold",
 },
   container: {
-    backgroundColor: "#fff",
+    backgroundColor: "#B2C8B4",
   },
   body: {
     margin: 40,
