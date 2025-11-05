@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import { useAuth } from "./AuthContext";
 
 // --- Cấu hình ---
-const API_URL = 'http://192.168.1.16:5000/api'; 
+const API_URL = 'http://192.168.1.46:5000/api'; 
 
 // --- Tạo Context ---
 const CourseContext = createContext();
@@ -84,15 +84,12 @@ export const CourseProvider = ({ children }) => {
                 },
                 body: JSON.stringify(courseData),
             });
-
-            // --- SỬA LỖI: Kiểm tra OK trước ---
+            
             if (!response.ok) {
                 const errorMsg = await getErrorFromResponse(response);
-                throw new Error(errorMsg || "Tạo khóa học thất bại.");
+                throw new Error(errorMsg || 'Tạo khóa học thất bại.');
             }
-            
-            const result = await response.json();
-            setCourses(prev => [result, ...prev]);
+
             Alert.alert("Thành công", "Khóa học đã được tạo.");
             return true;
 
@@ -159,19 +156,11 @@ export const CourseProvider = ({ children }) => {
                 },
             });
 
-            // --- SỬA LỖI: Kiểm tra OK trước ---
             if (!response.ok) {
-                // DELETE có thể trả về lỗi JSON hoặc không
                 const errorMsg = await getErrorFromResponse(response);
                 throw new Error(errorMsg || 'Xóa khóa học thất bại.');
             }
-
-            // Nếu thành công (ví dụ: status 204 No Content),
-            // không cần response.json()
             
-            setCourses(prevCourses => 
-                prevCourses.filter(course => course._id !== courseId)
-            );
             Alert.alert("Thành công", "Khóa học đã được xóa.");
             return true;
 

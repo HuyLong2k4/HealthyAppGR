@@ -29,7 +29,7 @@ const RegisterPage = () => {
     const userData = { username, email, password, phone, gender, dob };
 
     try {
-      const res = await fetch("http://192.168.1.16:5000/api/users", {
+      const res = await fetch("http://192.168.1.46:5000/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),

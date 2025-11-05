@@ -3,63 +3,72 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
 
 const SetupInfor = () => {
-  const router = useRouter()
-  const { user, updateUser } = useAuth()
-  const [ loading, setLoading ] = useState(false)
+  const router = useRouter();
+  const { user, updateUser } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
 
-  const [ username, setUsername ] = useState(user?.username || "")
-  const [ phone, setPhone ] = useState(user?.phone || "")
-  const [ dob, setDob ] = useState(user?.dob ? new Date(user.dob) : new Date());
+  const [username, setUsername] = useState(user?.username || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : new Date());
 
 
   const handleSave = async () => {
-
-    setLoading(true)
+    setLoading(true);
+    
     const updateData = {
       username,
       phone,
       dob: dob.toISOString(),
-    }
+    };
 
     try {
-      const res = await fetch(`http://192.168.1.16:5000/api/users/${user.id}`, {
+      const res = await fetch(`http://192.168.1.46:5000/api/users/${user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(updateData),
-      })
+      });
 
       if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Không thể cập nhật thông tin.")
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Không thể cập nhật thông tin.");
       }
 
       const updatedUserFromServer = await res.json();
-
-      await updateUser(updatedUserFromServer)
-      Alert.alert("Thành công", "Thông tin của bạn đã được cập nhật.")
-      router.back()
-    } catch(error) {
-      console.error("Lỗi khi cập nhật:", error)
-      Alert.alert("Lỗi")
+      await updateUser(updatedUserFromServer);
+      Alert.alert("Thành công", "Thông tin của bạn đã được cập nhật.");
+      router.back();
+    } catch (error) {
+      console.error("Lỗi khi cập nhật:", error);
+      Alert.alert("Lỗi");
     } finally {
-      setLoading(false) // Dừng loading dù thành công hay thất bại
+      setLoading(false); // Dừng loading dù thành công hay thất bại
     }
   }
 
-  const onDateChange = (event: any, selectedDate: React.SetStateAction<Date>) => {
+  const onDateChange = (event: any, selectedDate?: Date) => {
     // Với Android, cần ẩn picker đi theo cách này
-    if (Platform.OS === 'android') {
-        setShowPicker(false);
+    if (Platform.OS === "android") {
+      setShowPicker(false);
     }
     // Chỉ cập nhật nếu người dùng đã chọn một ngày (không phải bấm cancel)
     if (selectedDate) {
-        setDob(selectedDate);
+      setDob(selectedDate);
     }
   };
 
@@ -77,47 +86,65 @@ const SetupInfor = () => {
       <View style={styles.avatarContainer}>
         <Image
           style={styles.avatar}
-          source={ user?.imageURL ? { uri: user.imageURL } : require("../../../../assets/images/avatar.png") }
+          source={
+            user?.imageURL
+              ? { uri: user.imageURL }
+              : require("../../../../assets/images/avatar.png")
+          }
         />
       </View>
 
       {/* Form */}
       <View style={styles.form}>
         <View>
-            <Text>Họ và Tên</Text>
-            <TextInput style={styles.input} value={username} onChangeText={setUsername} placeholder="Nhập họ và tên" />
+          <Text>Họ và Tên</Text>
+          <TextInput
+            style={styles.input}
+            value={username}
+            onChangeText={setUsername}
+            placeholder="Nhập họ và tên"
+          />
         </View>
+        
         <View>
-            <Text>Số điện thoại</Text>
-            <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Nhập số điện thoại" keyboardType="phone-pad" />
+          <Text>Số điện thoại</Text>
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="Nhập số điện thoại"
+            keyboardType="phone-pad"
+          />
         </View>
+        
         <View>
-            <Text style={styles.label}>Ngày sinh</Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowPicker(true)}
-            >
-              <Text style={styles.datePickerText}>
-                {dob.toLocaleDateString("vi-VN")}
-              </Text>
-            </TouchableOpacity>
+          <Text style={styles.label}>Ngày sinh</Text>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setShowPicker(true)}
+          >
+            <Text style={styles.datePickerText}>
+              {dob.toLocaleDateString("vi-VN")}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {showPicker && (
           <DateTimePicker
             value={dob}
             mode="date"
-            display={"default"}
+            display="default"
             onChange={onDateChange}
           />
         )}
       </View>
 
       {/* Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.button}
         onPress={handleSave}
-        disabled={loading}>
+        disabled={loading}
+      >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -125,10 +152,10 @@ const SetupInfor = () => {
         )}
       </TouchableOpacity>
     </View>
-  )
-}
+  );
+};
 
-export default SetupInfor
+export default SetupInfor;
 
 const styles = StyleSheet.create({
   container: {
@@ -169,9 +196,9 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 5,
-    color: '#333'
+    color: "#333",
   },
   input: {
     marginTop: 5,
@@ -199,7 +226,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   datePickerText: {
-    fontSize: 16, 
-    color: "#333" 
+    fontSize: 16,
+    color: "#333",
   },
-})
+});

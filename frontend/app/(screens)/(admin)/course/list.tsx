@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useCourse } from "@/context/CourseContext";
-import { router } from "expo-router";
-import React, { useEffect } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -20,17 +20,18 @@ const AdminListPage = () => {
     const { courses, isLoading, refreshCourses, deleteCourse } = useCourse();
     const { logout } = useAuth();
 
-    // --- Tự động tải danh sách khi vào trang ---
-    useEffect(() => {
-        refreshCourses();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            console.log("Làm mới danh sách khóa học...");
+            refreshCourses();
+        }, [refreshCourses])
+    );
 
     const handleLogout = async () => {
         await logout();
         router.replace("/(screens)/(stack)/login")
     }
 
-    // --- Hàm xử lý xóa khóa học ---
     const handleDelete = (id) => {
         Alert.alert(
             "Xác nhận",
@@ -58,10 +59,11 @@ const AdminListPage = () => {
                 <ScrollView contentContainerStyle={styles.scroll}>
                     <Text style={styles.title}>Danh sách khóa học</Text>
                     
-                    <TouchableOpacity style={styles.createButton}> 
+                    <TouchableOpacity style={styles.createButton}
+                        onPress={() => router.push("/(screens)/(admin)/course/create")}
+                    > 
                         <Text 
                             style={styles.createButtonText}
-                            onPress={() => router.push("/(screens)/(admin)/course/create")}
                             >Tạo khóa học</Text>
                     </TouchableOpacity>
 
@@ -123,6 +125,17 @@ const AdminListPage = () => {
                                         <Text style={styles.buttonText}>Xóa</Text>
                                     </TouchableOpacity>
                                 </View>
+                                <TouchableOpacity
+                                    style={[styles.button, styles.buttonLession]}
+                                    onPress={() => 
+                                        router.push({
+                                            pathname: "/(screens)/(admin)/lesson/list",
+                                            params: { id: course._id },
+                                        })
+                                    }
+                                >
+                                    <Text style={styles.buttonText}>Danh sách bài học</Text>
+                                </TouchableOpacity>
                             </View>
                         ))
                     )}
@@ -232,5 +245,12 @@ const styles = StyleSheet.create({
         color: "#000",
         fontWeight: "600",
         textAlign: "center",
+    },
+
+    buttonLession: {
+        backgroundColor: "#1c65a1ff",
+        borderRadius: 8,
+        marginTop: 8,
+        alignItems: 'center'
     }
 });
