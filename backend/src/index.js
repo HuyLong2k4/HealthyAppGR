@@ -13,6 +13,7 @@ const healthInfoRoutes = require('./app/routes/healthInformationRoutes');
 const authRoutes = require('./app/routes/authRoutes');
 const deviceRoutes = require('./app/routes/deviceRoutes');
 const enrollmentRoutes = require('./app/routes/enrollmentRoutes');
+const dailyGoalRoutes = require('./app/routes/dailyGoalRoutes');
 
 connectDB();
 
@@ -37,7 +38,8 @@ app.use('/api/health-information', healthInfoRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/daily-goals', dailyGoalRoutes);
 
 app.listen(PORT, "0.0.0.0", () =>
-  console.log(`Server listening on http://192.168.1.16:${PORT}`)
+  console.log(`Server listening on http://192.168.1.46:${PORT}`)
 );

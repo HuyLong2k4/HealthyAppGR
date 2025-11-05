@@ -1,5 +1,6 @@
 import { useCourse } from "@/context/CourseContext";
 import { useEnrollment } from "@/context/EnrollmentContext";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,18 +11,54 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import { FontAwesome } from '@expo/vector-icons';
+
+interface Course {
+  _id: string;
+  title: string;
+  description: string;
+  thumbnail?: string;
+}
+
+interface Enrollment {
+  course: string | { _id: string };
+}
 
 const CategoryPage = () => {
   const { isLoading: isCoursesLoading, courses, refreshCourses } = useCourse();
   const { enrollInCourse, enrollment } = useEnrollment();
-  const [enrollingId, setEnrollingId] = useState(null);
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('all');
+
+  const tabs = [
+    { id: 'all', label: 'Tất cả' },
+    { id: 'enrolled', label: 'Đã tham gia' },
+    { id: 'completed', label: 'Đã hoàn thành' }
+  ];
+
+  // Lọc danh sách khóa học dựa trên tab đang active
+  const filteredCourses = courses.filter((course: Course) => {
+    const isEnrolled = enrollment.some(
+      (enr: Enrollment) => enr.course === course._id || 
+        (typeof enr.course === 'object' && enr.course._id === course._id)
+    );
+
+    switch (activeTab) {
+      case 'enrolled':
+        return isEnrolled;
+      case 'completed':
+        // Tạm thời return false vì chưa có logic completed
+        return false;
+      case 'all':
+      default:
+        return true;
+    }
+  });
 
   useEffect(() => {
     refreshCourses();
-  }, []);
+  }, [refreshCourses]);
 
-  const handleEnroll = async (courseId) => {
+  const handleEnroll = async (courseId: string) => {
     setEnrollingId(courseId);
     try {
       await enrollInCourse(courseId);
@@ -32,35 +69,60 @@ const CategoryPage = () => {
     }
   };
 
+  const handleListLessons = (courseId: string) => {
+    router.push({
+      pathname: "/(screens)/(stack)/courses/list",
+      params: { courseId: courseId },
+    });
+  }
+
   return (
-    // Cải tiến: Container có nền xám nhạt
     <View style={styles.container}>
-      {/* Cải tiến: Style tiêu đề trang riêng */}
       <View style={styles.pageTitleContainer}>
         <Text style={styles.pageTitle}>Chương trình sức khỏe</Text>
       </View>
 
-      {/* Cải tiến: Style Tabs đẹp hơn */}
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity style={[styles.tabButton, styles.activeTab]}>
-          <Text style={[styles.tabText, styles.activeTabText]}>Tất cả</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabButton}>
-          <Text style={styles.tabText}>Đã tham gia</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabButton}>
-          <Text style={styles.tabText}>Đã hoàn thành</Text>
-        </TouchableOpacity>
+      <View style={styles.tabsOuterContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={styles.tabsContainer}
+        >
+          {tabs.map(tab => (
+            <TouchableOpacity
+              key={tab.id}
+              style={[
+                styles.tabButton,
+                activeTab === tab.id && styles.activeTab
+              ]}
+              onPress={() => setActiveTab(tab.id)}
+            >
+              <Text 
+                style={[
+                  styles.tabText,
+                  activeTab === tab.id && styles.activeTabText
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
-      {/* Cải tiến: Thêm paddingBottom cho ScrollView */}
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {isCoursesLoading ? (
           <ActivityIndicator size="large" color="#007AFF" />
-        ) : courses.length === 0 ? (
-          <Text style={styles.emptyText}>Chưa có khóa học nào.</Text>
+        ) : filteredCourses.length === 0 ? (
+          <Text style={styles.emptyText}>
+            {activeTab === 'enrolled' 
+              ? "Bạn chưa tham gia khóa học nào."
+              : activeTab === 'completed'
+              ? "Bạn chưa hoàn thành khóa học nào."
+              : "Chưa có khóa học nào."}
+          </Text>
         ) : (
-          courses.map((course) => {
+          filteredCourses.map((course) => {
             const isEnrolled = enrollment.some(
               (enr) =>
                 enr.course === course._id || enr.course?._id === course._id
@@ -68,7 +130,6 @@ const CategoryPage = () => {
             const isEnrolling = enrollingId === course._id;
 
             return (
-              // Cải tiến: Thẻ (card) với shadow và bo góc đẹp hơn
               <View key={course._id} style={styles.courseItem}>
                 {course.thumbnail ? (
                   <Image
@@ -90,19 +151,21 @@ const CategoryPage = () => {
                 </Text>
 
                 {isEnrolled ? (
-                  // Nếu ĐÃ ĐĂNG KÝ: Hiển thị tag + nút "Học tiếp"
                   <View style={styles.enrolledContainer}>
                     <View>
                       <Text>Hoàn thành: </Text>
                     </View>
                     <View>
-                      <TouchableOpacity style={styles.continueButton}>
-                        <Text style={styles.continueButtonText}>Học tiếp</Text>
+                      <TouchableOpacity 
+                        onPress={() => handleListLessons(course._id)}
+                        style={styles.continueButton}>
+                        <Text 
+                          style={styles.continueButtonText}
+                          >Học tiếp</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 ) : (
-                  // Nếu CHƯA ĐĂNG KÝ: Hiển thị nút "Đăng ký"
                   <TouchableOpacity
                     style={[
                       styles.cardButton,
@@ -116,7 +179,6 @@ const CategoryPage = () => {
                     </Text>
                   </TouchableOpacity>
                 )}
-                {/* --- KẾT THÚC SỬA CẤU TRÚC --- */}
               </View>
             );
           })
@@ -131,56 +193,70 @@ export default CategoryPage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50, // An toàn cho tai thỏ
-    backgroundColor: "#F9F9F9", // Nền xám nhạt
+    paddingTop: 60,
+    backgroundColor: "#F5F7FA",
   },
   scrollViewContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 40, // Khoảng trống dưới cùng
+    paddingHorizontal: 20,
+    paddingBottom: 50,
   },
   pageTitleContainer: {
-    paddingHorizontal: 16, // Đồng bộ với padding của scrollview
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
   pageTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#222",
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#1A2138",
+    letterSpacing: -0.5,
+  },
+  tabsOuterContainer: {
+    backgroundColor: "#F5F7FA",
+    marginBottom: 24,
   },
   tabsContainer: {
     flexDirection: "row",
-    marginBottom: 20,
     paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 12,
   },
   tabButton: {
-    flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginHorizontal: 4,
+    paddingHorizontal: 20,
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     alignItems: "center",
+    justifyContent: "center",
+    minWidth: 120,
     borderWidth: 1,
-    borderColor: '#EEE',
+    borderColor: '#E2E8F0',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   activeTab: {
-    backgroundColor: "#E3EEFD",
-    borderColor: '#E3EEFD',
+    backgroundColor: "#2563EB",
+    borderColor: '#2563EB',
+    shadowColor: "#2563EB",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   tabText: {
-    fontSize: 14, // To hơn cho dễ đọc
-    fontWeight: '500',
-    color: "#555",
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#64748B",
   },
   activeTabText: {
-    color: "#2F80ED",
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   courseItem: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16, // Bo góc mượt hơn
-    marginBottom: 20, // Khoảng cách giữa các thẻ
-    // Shadow đẹp hơn
+    borderRadius: 16,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -212,12 +288,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 20,
   },
-  // --- Container cho (Tag + Nút Học tiếp) ---
+
   enrolledContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
-  // Style cho Tag "Đã tham gia"
+
   enrolledTag: {
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -228,7 +304,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 13,
   },
-  // Style cho nút "Học tiếp" (Outline)
   continueButton: {
     alignItems: 'center',
     paddingVertical: 6,
@@ -244,7 +319,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 13,
   },
-  // --- Nút "Đăng ký" ---
   cardButton: {
     backgroundColor: "#2F80ED",
     paddingVertical: 12,
@@ -261,7 +335,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  // --- Trạng thái rỗng/lỗi ---
   emptyText: {
     fontSize: 16,
     color: "#999",

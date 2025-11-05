@@ -1,13 +1,30 @@
-import React from 'react'
-import { StyleSheet, TextInput, View } from 'react-native'
+import React from 'react';
+import { KeyboardTypeOptions, StyleSheet, TextInput, View } from 'react-native';
 
-const BoxAddNewTarget = ({ textInput } : { textInput : string }) => {
+interface BoxAddNewTargetProps {
+  textInput: string;
+  value?: string;
+  onChangeText?: (text: string) => void;
+  keyboardType?: KeyboardTypeOptions;
+  placeholder?: string;
+}
+
+const BoxAddNewTarget = ({ 
+  textInput, 
+  value, 
+  onChangeText, 
+  keyboardType = 'default',
+  placeholder 
+}: BoxAddNewTargetProps) => {
   return (
     <View style={styles.container}>
         <TextInput
-        placeholder={textInput}
+        placeholder={placeholder || textInput}
         style={styles.input}
         placeholderTextColor="#999"
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
       />
     </View>
   )

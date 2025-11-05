@@ -2,14 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { Alert } from "react-native";
 import { useAuth } from "./AuthContext";
 
-const API_URL = "http://192.168.1.16:5000/api";
+const API_URL = "http://192.168.1.46:5000/api";
 
 const EnrollmentContext = createContext();
 
-/**
- * Xử lý lỗi response một cách an toàn
- * Cố gắng parse lỗi JSON, nếu thất bại (là HTML), trả về text.
- */
 const getErrorFromResponse = async (response) => {
     try {
         const jsonError = await response.json();

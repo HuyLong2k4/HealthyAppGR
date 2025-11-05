@@ -68,6 +68,16 @@ const AdminCoursePage = () => {
                     <View style={{ width: 40 }} />
                 </View>
                     <View style={styles.form}>
+                        <Text style={styles.label}>Tiêu đề khóa học</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Nhập tiêu đề cho khóa học"
+                            value={title}
+                            onChangeText={setTitle}
+                            editable={!isLoading}
+                            autoCapitalize="none"
+                        />
+                        
                         <Text style={styles.label}>URL ảnh bìa (Thumbnail)</Text>
                         <TextInput
                             style={styles.input}
@@ -77,15 +87,8 @@ const AdminCoursePage = () => {
                             editable={!isLoading}
                             autoCapitalize="none"
                         />
+
                         <Text style={styles.label}>Mô tả khóa học</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nhập tiêu đề cho khóa học"
-                            value={title}
-                            onChangeText={setTitle}
-                            editable={!isLoading}
-                            autoCapitalize="none"
-                        />
                         <TextInput
                           style={[styles.input, styles.textArea]}
                           placeholder="Nhập mô tả chi tiết cho khóa học..."
