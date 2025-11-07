@@ -10,7 +10,6 @@ class HealthInformationService {
   static calculateBMI(height, weight) {
     if (height > 0 && weight > 0) {
       const heightInMeters = height / 100;
-      // Làm tròn đến 2 chữ số thập phân
       return Math.round((weight / (heightInMeters * heightInMeters)) * 100) / 100;
     }
     return null;

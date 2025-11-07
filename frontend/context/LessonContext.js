@@ -1,10 +1,8 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import { Alert } from "react-native";
-// BỔ SUNG: Import useAuth
 import { useAuth } from "./AuthContext";
 
-// SỬA: Chuẩn hóa API_URL
-const API_URL = "http://192.168.1.46:5000/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 // SỬA: Đổi tên thành LessonContext
 const LessonContext = createContext();

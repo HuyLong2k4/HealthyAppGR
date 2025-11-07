@@ -1,18 +1,19 @@
 const express = require('express');
 const HealthIndexController = require('../controllers/healthIndexController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // [POST] /api/health-indices - Tạo một bản ghi mới
-router.post('/', HealthIndexController.createHealthIndex);
+router.post('/', authMiddleware, HealthIndexController.createHealthIndex);
 
 // [GET] /api/health-indices/user/:userId - Lấy lịch sử chỉ số của một user
-router.get('/user/:userId', HealthIndexController.getHealthIndicesByUserId);
+router.get('/user/:userId', authMiddleware, HealthIndexController.getHealthIndicesByUserId);
 
 // [PUT] /api/health-indices/:id - Cập nhật một bản ghi
-router.put('/:id', HealthIndexController.updateHealthIndex);
+router.put('/:id', authMiddleware, HealthIndexController.updateHealthIndex);
 
 // [DELETE] /api/health-indices/:id - Xóa một bản ghi
-router.delete('/:id', HealthIndexController.deleteHealthIndex);
+router.delete('/:id', authMiddleware, HealthIndexController.deleteHealthIndex);
 
 module.exports = router;

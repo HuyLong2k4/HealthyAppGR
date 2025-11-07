@@ -2,8 +2,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { Alert } from "react-native";
 import { useAuth } from "./AuthContext";
 
-// --- Cấu hình ---
-const API_URL = 'http://192.168.1.46:5000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 // --- Goal Status ---
 export const GoalStatus = {

@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +22,7 @@ const LoginPage = () => {
     }
 
     try {
-      const res = await fetch("http://192.168.1.46:5000/api/auth/login", {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,8 +33,10 @@ const LoginPage = () => {
       const result = await res.json();
 
       if (res.ok) {
-        Alert.alert('Đăng nhập thành công! Đang chuyển hướng...');
         const { token, user } = result;
+        
+        console.log('Login response:', { token: !!token, user });
+        console.log('User ID:', user?._id || user?.id);
 
         await login(token, user);
 

@@ -8,7 +8,6 @@ class CommentService {
    */
   static async createComment(commentData) {
     const newComment = new Comment(commentData);
-    // Populate user để trả về thông tin người gửi ngay lập tức
     await newComment.save();
     return newComment.populate('user', 'username imageURL');
   }
@@ -20,8 +19,8 @@ class CommentService {
    */
   static async getCommentsByCourseId(courseId) {
     return await Comment.find({ course: courseId })
-      .populate('user', 'username imageURL') // Lấy thông tin người comment
-      .sort({ createdAt: -1 }); // Sắp xếp comment mới nhất lên đầu
+      .populate('user', 'username imageURL')
+      .sort({ createdAt: -1 });
   }
 
   /**
@@ -32,7 +31,6 @@ class CommentService {
    * @returns {Promise<Document|null>}
    */
   static async updateComment(commentId, userId, updates) {
-    // Tìm comment khớp cả commentId và userId để đảm bảo đúng chủ sở hữu
     const query = { _id: commentId, user: userId };
     return await Comment.findOneAndUpdate(query, updates, { new: true });
   }
@@ -44,7 +42,6 @@ class CommentService {
    * @returns {Promise<Document|null>}
    */
   static async deleteComment(commentId, userId) {
-    // Tương tự, chỉ xóa khi commentId và userId cùng khớp
     const query = { _id: commentId, user: userId };
     return await Comment.findOneAndDelete(query);
   }

@@ -7,6 +7,38 @@ class HealthIndexService {
    * @returns {Promise<Document>}
    */
   static async createHealthIndex(indexData) {
+    // Validate health metrics ranges
+    const validations = [
+      { field: 'bodyTemperature', min: 35, max: 42, name: 'Body temperature' },
+      { field: 'heartRate', min: 30, max: 220, name: 'Heart rate' },
+      { field: 'oxygenSaturation', min: 0, max: 100, name: 'Oxygen saturation' },
+      { field: 'respiratoryRate', min: 0, max: 60, name: 'Respiratory rate' },
+      { field: 'sleep', min: 0, max: 24, name: 'Sleep hours' },
+      { field: 'stepCount', min: 0, max: 100000, name: 'Step count' }
+    ];
+
+    for (const validation of validations) {
+      const value = indexData[validation.field];
+      if (value !== undefined && value !== null) {
+        if (value < validation.min || value > validation.max) {
+          throw new Error(
+            `${validation.name} must be between ${validation.min} and ${validation.max}`
+          );
+        }
+      }
+    }
+
+    // Validate recordedTime
+    if (indexData.recordedTime) {
+      const recordedTime = new Date(indexData.recordedTime);
+      if (isNaN(recordedTime.getTime())) {
+        throw new Error('Invalid recordedTime format');
+      }
+      if (recordedTime > new Date()) {
+        throw new Error('recordedTime cannot be in the future');
+      }
+    }
+
     const newIndex = new HealthIndex(indexData);
     return await newIndex.save();
   }

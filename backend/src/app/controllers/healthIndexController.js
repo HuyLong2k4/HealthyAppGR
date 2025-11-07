@@ -5,7 +5,7 @@ class HealthIndexController {
     try {
       const indexData = {
         ...req.body,
-        user: req.body.user // << THAY BẰNG req.user.id TRONG THỰC TẾ
+        user: req.user.id
       };
       const index = await HealthIndexService.createHealthIndex(indexData);
       res.status(201).json({ message: 'Health index record created', index });
@@ -16,7 +16,6 @@ class HealthIndexController {
 
   static async getHealthIndicesByUserId(req, res) {
     try {
-      // Trong thực tế, cần kiểm tra user đang request có quyền xem dữ liệu của userId này không
       const indices = await HealthIndexService.getHealthIndicesByUserId(req.params.userId);
       res.status(200).json(indices);
     } catch (error) {
@@ -27,7 +26,7 @@ class HealthIndexController {
   static async updateHealthIndex(req, res) {
     try {
       const indexId = req.params.id;
-      const userId = req.body.user; // << THAY BẰNG req.user.id TRONG THỰC TẾ
+      const userId = req.user.id;
       const updates = req.body;
 
       const updatedIndex = await HealthIndexService.updateHealthIndex(indexId, userId, updates);
@@ -43,7 +42,7 @@ class HealthIndexController {
   static async deleteHealthIndex(req, res) {
     try {
       const indexId = req.params.id;
-      const userId = req.body.user; // << THAY BẰNG req.user.id TRONG THỰC TẾ
+      const userId = req.user.id;
 
       const deletedIndex = await HealthIndexService.deleteHealthIndex(indexId, userId);
       if (!deletedIndex) {

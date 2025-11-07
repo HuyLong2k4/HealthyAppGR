@@ -11,6 +11,8 @@ import {
   View
 } from "react-native";
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 const RegisterPage = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail]       = useState("");
@@ -29,7 +31,7 @@ const RegisterPage = () => {
     const userData = { username, email, password, phone, gender, dob };
 
     try {
-      const res = await fetch("http://192.168.1.46:5000/api/users", {
+      const res = await fetch(`${API_URL}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),

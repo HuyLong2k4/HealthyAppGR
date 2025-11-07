@@ -9,7 +9,6 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user từ AsyncStorage khi mở app
   useEffect(() => {
     const loadUser = async () => {
       try {

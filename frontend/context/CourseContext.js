@@ -2,23 +2,15 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { Alert } from "react-native";
 import { useAuth } from "./AuthContext";
 
-// --- Cấu hình ---
-const API_URL = 'http://192.168.1.46:5000/api'; 
+const API_URL = process.env.EXPO_PUBLIC_API_URL; 
 
-// --- Tạo Context ---
 const CourseContext = createContext();
 
-/**
- * Xử lý lỗi response một cách an toàn
- * Cố gắng parse lỗi JSON, nếu thất bại, trả về text.
- */
 const getErrorFromResponse = async (response) => {
     try {
-        // Thử parse lỗi dưới dạng JSON (vd: { error: "Tin nhắn lỗi" })
         const jsonError = await response.json();
         return jsonError.error || "Lỗi không xác định từ server.";
     } catch (e) {
-        // Nếu không phải JSON (vd: HTML lỗi 500), trả về text
         const textError = await response.text();
         return textError || `Lỗi ${response.status}: Server không phản hồi JSON.`;
     }
@@ -27,7 +19,7 @@ const getErrorFromResponse = async (response) => {
 export const CourseProvider = ({ children }) => {
     const [courses, setCourses] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const { token } = useAuth();
+    const { token, logout } = useAuth();
 
     const fetchCourses = useCallback(async () => {
         if (!token) return;
@@ -42,13 +34,19 @@ export const CourseProvider = ({ children }) => {
                 },
             });
 
-            // --- SỬA LỖI: Kiểm tra OK trước ---
             if (!response.ok) {
                 const errorMsg = await getErrorFromResponse(response);
+
+                if (response.status === 401) {
+                    console.error("Token không hợp lệ, đang logout...");
+                    await logout();
+                    Alert.alert("Phiên đăng nhập hết hạn", "Vui lòng đăng nhập lại.");
+                    return;
+                }
+                
                 throw new Error(errorMsg);
             }
             
-            // Chỉ parse JSON nếu response OK
             const data = await response.json();
             setCourses(data); 
 
@@ -58,7 +56,7 @@ export const CourseProvider = ({ children }) => {
         } finally {
             setIsLoading(false);
         }
-    }, [token]); 
+    }, [token, logout]); 
 
     useEffect(() => {
         if (token) {
@@ -119,7 +117,6 @@ export const CourseProvider = ({ children }) => {
                 body: JSON.stringify(updateData),
             });
 
-            // --- SỬA LỖI: Kiểm tra OK trước ---
             if (!response.ok) {
                 const errorMsg = await getErrorFromResponse(response);
                 throw new Error(errorMsg || 'Cập nhật khóa học thất bại.');

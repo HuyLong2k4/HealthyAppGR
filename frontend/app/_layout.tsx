@@ -2,6 +2,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { CourseProvider } from '@/context/CourseContext';
 import { DailyGoalProvider } from '@/context/DailyGoalContext';
 import { EnrollmentProvider } from '@/context/EnrollmentContext';
+import { HealthIndexProvider } from '@/context/HealthIndexContext';
 import { LessonProvider } from '@/context/LessonContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
@@ -41,15 +42,17 @@ export default function RootLayout() {
                 <CourseProvider>
                     <EnrollmentProvider>
                         <LessonProvider>
-                            <ThemeProvider 
-                                value={colorScheme === 'dark' ? MyDarkTheme : MyLightTheme}
-                            >
-                                <Stack>
-                                    <Stack.Screen name="(screens)" options={{ headerShown: false }} />
-                                    <Stack.Screen name="+not-found" />
-                                </Stack>
-                                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} /> 
-                            </ThemeProvider>
+                            <HealthIndexProvider>
+                                <ThemeProvider 
+                                    value={colorScheme === 'dark' ? MyDarkTheme : MyLightTheme}
+                                >
+                                    <Stack>
+                                        <Stack.Screen name="(screens)" options={{ headerShown: false }} />
+                                        <Stack.Screen name="+not-found" />
+                                    </Stack>
+                                    <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} /> 
+                                </ThemeProvider>
+                            </HealthIndexProvider>
                         </LessonProvider>
                     </EnrollmentProvider>
                 </CourseProvider>

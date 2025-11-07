@@ -1,8 +1,10 @@
 import Feature from "@/components/stacks/Feature"
 import StatBox from "@/components/stacks/StatBox"
 import { CategoryColors, CategoryIcons, UnitLabels } from "@/constants/DailyGoalConstants"
+import { HealthIndexType, getHealthIndexConfig } from "@/constants/HealthIndexConstants"
 import { useCourse } from "@/context/CourseContext"
 import { GoalStatus, useDailyGoal } from "@/context/DailyGoalContext"
+import { useHealthIndexes } from "@/context/HealthIndexContext"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import React, { useCallback, useEffect, useState } from "react"
@@ -30,9 +32,11 @@ const getCurrentWeek = () => {
 };
 
 const HomeScreen = () => {
+  const { healthIndexes, refreshHealthIndexes } = useHealthIndexes();
   const { refreshCourses } = useCourse();
   const { dailyGoals, getGoalsForWeek, updateGoalStatus } = useDailyGoal();
   const [todayGoals, setTodayGoals] = useState<any[]>([]);
+
 
   const loadTodayGoals = useCallback(async () => {
     const week = getCurrentWeek();
@@ -40,9 +44,10 @@ const HomeScreen = () => {
   }, [getGoalsForWeek]);
 
   useEffect(() => {
+    refreshHealthIndexes();
     refreshCourses();
     loadTodayGoals();
-  }, [refreshCourses, loadTodayGoals]);
+  }, [refreshHealthIndexes, refreshCourses, loadTodayGoals]);
 
   useEffect(() => {
     // Filter goals for today
@@ -143,16 +148,122 @@ const HomeScreen = () => {
       )}
 
       {/* Chỉ số sức khỏe */}
-      <Text style={styles.sectionTitle}>Chỉ số sức khỏe</Text>
-      <View style={styles.healthStats}>
-        <StatBox iconName="thermometer" label="Nhiệt độ cơ thể" value="84" unit="ºC" color="#FF9F43" />
-        <StatBox iconName="heart" label="Nhịp tim" value="70" unit="BPM" color="#FF6B81" />
-        <StatBox iconName="droplet" label="Độ bão hòa Oxi" value="84" unit="mmHg" color="#2986ff"/>
-        <StatBox iconName="activity" label="Tần số hô hấp" value="155" unit="mg/dL" color="#34C759" />
-        <StatBox iconName="github" label="Giấc ngủ" value="8" unit="H" color="#00C7BE" />
-        <StatBox iconName="github" label="Số bước chân" value="155" unit="steps" color="#9D00FF" />
-        {/* Thêm các chỉ số khác ở đây */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Chỉ số sức khỏe</Text>
+        {healthIndexes && healthIndexes.length > 0 && (
+          <TouchableOpacity onPress={() => router.push("/(screens)/(stack)/healthMetrics/HistoryHealthIndex" as any)}>
+            <Text style={styles.viewAllText}>Xem tất cả</Text>
+          </TouchableOpacity>
+        )}
       </View>
+      {healthIndexes && healthIndexes.length > 0 ? (
+        <View style={styles.healthStats}>
+          {healthIndexes.slice(-1).map((healthIndex: any, idx: number) => {
+            // Convert backend fields to display format
+            const metrics = [];
+            
+            if (healthIndex.bodyTemperature) {
+              const config = getHealthIndexConfig(HealthIndexType.BODY_TEMPERATURE);
+              metrics.push({
+                type: HealthIndexType.BODY_TEMPERATURE,
+                icon: config.icon,
+                label: config.label,
+                value: healthIndex.bodyTemperature.toString(),
+                unit: config.unit,
+                color: config.color
+              });
+            }
+            
+            if (healthIndex.heartRate) {
+              const config = getHealthIndexConfig(HealthIndexType.HEART_RATE);
+              metrics.push({
+                type: HealthIndexType.HEART_RATE,
+                icon: config.icon,
+                label: config.label,
+                value: healthIndex.heartRate.toString(),
+                unit: config.unit,
+                color: config.color
+              });
+            }
+            
+            if (healthIndex.oxygenSaturation) {
+              const config = getHealthIndexConfig(HealthIndexType.OXYGEN_SATURATION);
+              metrics.push({
+                type: HealthIndexType.OXYGEN_SATURATION,
+                icon: config.icon,
+                label: config.label,
+                value: healthIndex.oxygenSaturation.toString(),
+                unit: config.unit,
+                color: config.color
+              });
+            }
+            
+            if (healthIndex.respiratoryRate) {
+              const config = getHealthIndexConfig(HealthIndexType.RESPIRATORY_RATE);
+              metrics.push({
+                type: HealthIndexType.RESPIRATORY_RATE,
+                icon: config.icon,
+                label: config.label,
+                value: healthIndex.respiratoryRate.toString(),
+                unit: config.unit,
+                color: config.color
+              });
+            }
+            
+            if (healthIndex.sleep) {
+              const config = getHealthIndexConfig(HealthIndexType.SLEEP);
+              metrics.push({
+                type: HealthIndexType.SLEEP,
+                icon: config.icon,
+                label: config.label,
+                value: healthIndex.sleep.toString(),
+                unit: config.unit,
+                color: config.color
+              });
+            }
+            
+            if (healthIndex.stepCount) {
+              const config = getHealthIndexConfig(HealthIndexType.STEP_COUNT);
+              metrics.push({
+                type: HealthIndexType.STEP_COUNT,
+                icon: config.icon,
+                label: config.label,
+                value: healthIndex.stepCount.toString(),
+                unit: config.unit,
+                color: config.color
+              });
+            }
+            
+            return metrics.map((metric, index) => (
+              <StatBox 
+                key={`${idx}-${index}`}
+                iconName={metric.icon} 
+                label={metric.label} 
+                value={metric.value} 
+                unit={metric.unit} 
+                color={metric.color}
+                onPress={() => router.push({
+                  pathname: "/(screens)/(stack)/healthMetrics/DetailHealthIndex" as any,
+                  params: { type: metric.type }
+                })}
+              />
+            ));
+          })}
+        </View>
+      ) : (
+        <View style={styles.weekGoal}>
+          <Ionicons name="fitness-outline" size={48} color="#ccc" />
+          <Text style={styles.weekGoalText}>
+            Bạn chưa có chỉ số sức khỏe. Hãy nhập chỉ số để theo dõi!
+          </Text>
+          <TouchableOpacity 
+            style={styles.goalButton}
+            onPress={() => router.push("/(screens)/(stack)/healthMetrics/AddHealthIndex" as any)}
+          >
+            <Text style={styles.goalButtonText}>Nhập chỉ số</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 </View>
     </ScrollView>
   )
@@ -203,13 +314,23 @@ const styles = StyleSheet.create({
     margin: 20,
     paddingBottom: "20%"
   },
-  sectionTitle: {
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 35,
     marginBottom: 15,
+    paddingLeft: 5,
+  },
+  sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#2D3748",
-    paddingLeft: 5,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: "#4285F4",
+    fontWeight: "600",
   },
   features: {
     flexDirection: "row",
@@ -266,7 +387,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     marginTop: 15,
-    gap: 12,
     justifyContent: "space-between",
     backgroundColor: "#FFFFFF",
     padding: 15,
@@ -298,11 +418,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
-  },
-  viewAllText: {
-    fontSize: 14,
-    color: "#4285F4",
-    fontWeight: "500",
   },
   goalItem: {
     flexDirection: "row",

@@ -15,6 +15,8 @@ import {
   View
 } from "react-native";
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 const SetupInfor = () => {
   const router = useRouter();
   const { user, updateUser } = useAuth();
@@ -36,7 +38,7 @@ const SetupInfor = () => {
     };
 
     try {
-      const res = await fetch(`http://192.168.1.46:5000/api/users/${user.id}`, {
+      const res = await fetch(`${API_URL}/users/${user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

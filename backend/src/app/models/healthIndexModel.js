@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-// chỉ số sưc khỏe tại thời điểm cụ thể
-const HealthIndexSchema = new mongoose.Schema({
+
+// Chỉ số sức khỏe tại thời điểm cụ thể
+const HealthIndexSchema = new mongoose.Schema({  
   recordedTime:       { type: Date, required: true },
   bodyTemperature:    { type: Number, required: true },
   heartRate:          { type: Number, required: true },
