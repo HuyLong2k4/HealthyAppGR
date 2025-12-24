@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-// SỬA: Import useLocalSearchParams để lấy lessonId
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {

@@ -1,4 +1,4 @@
-const Course = require('../models/courseModel'); // Đảm bảo đường dẫn đúng
+const Course = require('../models/courseModel');
 
 class CourseService {
   /**

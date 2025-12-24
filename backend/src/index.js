@@ -14,6 +14,10 @@ const authRoutes = require('./app/routes/authRoutes');
 const deviceRoutes = require('./app/routes/deviceRoutes');
 const enrollmentRoutes = require('./app/routes/enrollmentRoutes');
 const dailyGoalRoutes = require('./app/routes/dailyGoalRoutes');
+const doctorRoutes = require('./app/routes/doctorRoutes');
+const appointmentRoutes = require('./app/routes/appointmentRoutes');
+const messageRoutes = require('./app/routes/messageRoutes');
+const notificationRoutes = require('./app/routes/notificationRoutes');
 
 connectDB();
 
@@ -39,7 +43,11 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/daily-goals', dailyGoalRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.listen(PORT, "0.0.0.0", () =>
-  console.log(`Server listening on http://192.168.1.107:${PORT}`)
+  console.log(`Server listening on http://192.168.1.111:${PORT}`)
 );

@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 const GENDERS = ['MALE', 'FEMALE', 'OTHER'];
-const ROLES = ['PATIENT', 'STAFF', 'ADMIN'];
+const ROLES = ['PATIENT', 'DOCTOR', 'ADMIN'];
 
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },

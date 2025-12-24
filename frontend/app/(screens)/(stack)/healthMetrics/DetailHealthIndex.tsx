@@ -1,19 +1,21 @@
 import {
-    HealthIndexType,
-    getHealthIndexConfig
+  HealthIndexType,
+  getHealthIndexConfig
 } from '@/constants/HealthIndexConstants';
 import { useHealthIndexes } from '@/context/HealthIndexContext';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -58,16 +60,54 @@ export default function DetailHealthIndex() {
   // Lọc dữ liệu theo time range
   const filteredData = useMemo(() => {
     const now = new Date();
-    const ranges = {
-      day: 1,
-      week: 7,
-      month: 30,
-    };
     
-    const daysAgo = ranges[timeRange];
-    const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-    
-    return metricData.filter(item => item.date >= cutoffDate);
+    if (timeRange === 'day') {
+      // Ngày: Lọc chỉ hôm nay
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      return metricData.filter(item => item.date >= startOfDay);
+    } else if (timeRange === 'week') {
+      // Tuần: Lấy 7 ngày gần nhất, nhóm theo ngày và lấy max
+      const cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekData = metricData.filter(item => item.date >= cutoffDate);
+      
+      // Nhóm theo ngày
+      const groupedByDay: { [key: string]: { value: number; date: Date }[] } = {};
+      weekData.forEach(item => {
+        const dateKey = `${item.date.getFullYear()}-${item.date.getMonth()}-${item.date.getDate()}`;
+        if (!groupedByDay[dateKey]) {
+          groupedByDay[dateKey] = [];
+        }
+        groupedByDay[dateKey].push(item);
+      });
+      
+      // Lấy giá trị max của mỗi ngày
+      return Object.keys(groupedByDay).map(dateKey => {
+        const dayData = groupedByDay[dateKey];
+        const maxItem = dayData.reduce((max, item) => item.value > max.value ? item : max);
+        return maxItem;
+      }).sort((a, b) => a.date.getTime() - b.date.getTime());
+    } else {
+      // Tháng: Lấy 12 tháng gần nhất, nhóm theo tháng và lấy max
+      const cutoffDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+      const monthData = metricData.filter(item => item.date >= cutoffDate);
+      
+      // Nhóm theo tháng
+      const groupedByMonth: { [key: string]: { value: number; date: Date }[] } = {};
+      monthData.forEach(item => {
+        const monthKey = `${item.date.getFullYear()}-${item.date.getMonth()}`;
+        if (!groupedByMonth[monthKey]) {
+          groupedByMonth[monthKey] = [];
+        }
+        groupedByMonth[monthKey].push(item);
+      });
+      
+      // Lấy giá trị max của mỗi tháng
+      return Object.keys(groupedByMonth).map(monthKey => {
+        const monthDataItems = groupedByMonth[monthKey];
+        const maxItem = monthDataItems.reduce((max, item) => item.value > max.value ? item : max);
+        return maxItem;
+      }).sort((a, b) => a.date.getTime() - b.date.getTime());
+    }
   }, [metricData, timeRange]);
 
   // Tính toán thống kê
@@ -123,7 +163,20 @@ export default function DetailHealthIndex() {
             <View style={styles.bars}>
               {filteredData.map((item, index) => {
                 const heightPercent = ((item.value - minValue) / range) * 100;
-                const height = (heightPercent / 100) * (CHART_HEIGHT - 60);
+                const height = (heightPercent / 100) * (CHART_HEIGHT - 20);
+                
+                // Format label dựa theo time range
+                let label = '';
+                if (timeRange === 'day') {
+                  // Hiển thị giờ:phút
+                  label = `${item.date.getHours()}:${item.date.getMinutes().toString().padStart(2, '0')}`;
+                } else if (timeRange === 'week') {
+                  // Hiển thị ngày/tháng
+                  label = `${item.date.getDate()}/${item.date.getMonth() + 1}`;
+                } else {
+                  // Hiển thị tháng/năm
+                  label = `T${item.date.getMonth() + 1}`;
+                }
                 
                 return (
                   <View key={index} style={styles.barWrapper}>
@@ -140,7 +193,7 @@ export default function DetailHealthIndex() {
                       />
                     </View>
                     <Text style={styles.xAxisLabel}>
-                      {item.date.getDate()}/{item.date.getMonth() + 1}
+                      {label}
                     </Text>
                   </View>
                 );
@@ -165,21 +218,32 @@ export default function DetailHealthIndex() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={config.color} translucent />
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={[config.color, config.color + 'dd']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.header}
+      >
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{config.label}</Text>
         <View style={{ width: 40 }} />
-      </View>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Current value */}
         <View style={styles.currentValueCard}>
-          <View style={[styles.iconCircle, { backgroundColor: config.color }]}>
-            <Ionicons name={config.icon as any} size={32} color="#FFFFFF" />
-          </View>
+          <LinearGradient
+            colors={[config.color, config.color + 'cc']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconCircle}
+          >
+            <Ionicons name={config.icon as any} size={36} color="#fff" />
+          </LinearGradient>
           <View style={styles.currentValueInfo}>
             <Text style={styles.currentValueLabel}>Giá trị hiện tại</Text>
             <Text style={styles.currentValue}>
@@ -205,7 +269,16 @@ export default function DetailHealthIndex() {
           <TouchableOpacity
             style={[styles.timeRangeButton, timeRange === 'day' && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange('day')}
+            activeOpacity={0.7}
           >
+            {timeRange === 'day' && (
+              <LinearGradient
+                colors={[config.color, config.color + 'dd']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.timeRangeGradient}
+              />
+            )}
             <Text style={[styles.timeRangeText, timeRange === 'day' && styles.timeRangeTextActive]}>
               Ngày
             </Text>
@@ -213,7 +286,16 @@ export default function DetailHealthIndex() {
           <TouchableOpacity
             style={[styles.timeRangeButton, timeRange === 'week' && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange('week')}
+            activeOpacity={0.7}
           >
+            {timeRange === 'week' && (
+              <LinearGradient
+                colors={[config.color, config.color + 'dd']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.timeRangeGradient}
+              />
+            )}
             <Text style={[styles.timeRangeText, timeRange === 'week' && styles.timeRangeTextActive]}>
               Tuần
             </Text>
@@ -221,7 +303,16 @@ export default function DetailHealthIndex() {
           <TouchableOpacity
             style={[styles.timeRangeButton, timeRange === 'month' && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange('month')}
+            activeOpacity={0.7}
           >
+            {timeRange === 'month' && (
+              <LinearGradient
+                colors={[config.color, config.color + 'dd']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.timeRangeGradient}
+              />
+            )}
             <Text style={[styles.timeRangeText, timeRange === 'month' && styles.timeRangeTextActive]}>
               Tháng
             </Text>
@@ -258,26 +349,31 @@ export default function DetailHealthIndex() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
-    paddingTop: 40,
+    backgroundColor: '#f8fafc',
   },
   header: {
+    paddingTop: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 10,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    letterSpacing: 0.3,
   },
   content: {
     flex: 1,
@@ -294,105 +390,122 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   currentValueCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 6,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   currentValueInfo: {
     flex: 1,
   },
   currentValueLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 6,
+    fontWeight: '500',
   },
   currentValue: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1e293b',
   },
   currentUnit: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'normal',
-    color: '#666',
+    color: '#64748b',
   },
   currentDate: {
     fontSize: 12,
-    color: '#999',
-    marginTop: 4,
+    color: '#94a3b8',
+    marginTop: 6,
   },
   timeRangeContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 6,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   timeRangeButton: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 12,
+    position: 'relative',
+    overflow: 'hidden',
   },
   timeRangeButtonActive: {
-    backgroundColor: '#4CAF50',
+    // gradient will be rendered
+  },
+  timeRangeGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   timeRangeText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#64748b',
     fontWeight: '500',
+    zIndex: 1,
   },
   timeRangeTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: '#fff',
+    fontWeight: 'bold',
   },
   chartContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 5,
     flexDirection: 'row',
   },
   yAxisLabels: {
     justifyContent: 'space-between',
-    paddingRight: 8,
-    height: CHART_HEIGHT - 40,
+    paddingRight: 10,
+    height: CHART_HEIGHT - 35,
   },
   axisLabel: {
-    fontSize: 10,
-    color: '#999',
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '500',
   },
   chartScroll: {
     flex: 1,
   },
   barsContainer: {
-    height: CHART_HEIGHT - 40,
+    height: CHART_HEIGHT,
     position: 'relative',
   },
   gridLines: {
@@ -400,7 +513,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 20,
+    bottom: 40,
     justifyContent: 'space-between',
   },
   gridLine: {
@@ -410,7 +523,7 @@ const styles = StyleSheet.create({
   bars: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    height: CHART_HEIGHT - 60,
+    height: CHART_HEIGHT - 8,
     paddingTop: 10,
   },
   barWrapper: {
@@ -418,61 +531,74 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   barColumn: {
-    height: CHART_HEIGHT - 60,
+    height: CHART_HEIGHT - 80,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
   bar: {
-    borderRadius: 4,
+    borderRadius: 6,
     minHeight: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   xAxisLabel: {
-    fontSize: 10,
-    color: '#999',
+    fontSize: 11,
+    color: '#94a3b8',
     marginTop: 8,
+    fontWeight: '500',
   },
   emptyChart: {
     height: CHART_HEIGHT,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: '#fff',
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  emptyChartText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  statsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
   },
+  emptyChartText: {
+    fontSize: 15,
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  statsCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
   statsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 20,
   },
   statItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#f1f5f9',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+    color: '#1e293b',
+    marginBottom: 6,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500',
   },
 });

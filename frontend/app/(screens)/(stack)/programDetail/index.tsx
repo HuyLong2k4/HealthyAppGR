@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   titleText: {
+    paddingTop: 20,
     fontSize: 18,
     fontWeight: '600',
   },

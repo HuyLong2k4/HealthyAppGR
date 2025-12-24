@@ -5,12 +5,14 @@ import {
 } from '@/constants/HealthIndexConstants';
 import { useHealthIndexes } from '@/context/HealthIndexContext';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -29,7 +31,7 @@ interface HealthIndexValues {
 
 export default function AddHealthIndex() {
   const router = useRouter();
-  const { createHealthIndex } = useHealthIndexes();
+  const { createHealthIndex, refreshHealthIndexes } = useHealthIndexes();
 
   const getDefaultValues = (): HealthIndexValues => {
     const allTypes = getAllHealthIndexTypes();
@@ -103,6 +105,9 @@ export default function AddHealthIndex() {
       
       console.log('Tạo health index thành công!');
       
+      // Refresh data trước khi quay lại
+      await refreshHealthIndexes();
+      
       Alert.alert('Thành công', 'Chỉ số sức khỏe đã được thêm', [
         {
           text: 'OK',
@@ -169,18 +174,24 @@ export default function AddHealthIndex() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <StatusBar barStyle="light-content" backgroundColor="#4facfe" translucent />
+      <LinearGradient
+        colors={['#4facfe', '#00f2fe']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.header}
+      >
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thêm chỉ số sức khỏe</Text>
         <TouchableOpacity 
           onPress={() => setValues(getDefaultValues())} 
           style={styles.resetButton}
         >
-          <Ionicons name="refresh" size={24} color="#4CAF50" />
+          <Ionicons name="refresh" size={24} color="#fff" />
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Info Card */}
@@ -196,21 +207,26 @@ export default function AddHealthIndex() {
 
         {/* Submit Button */}
         <TouchableOpacity
-          style={[
-            styles.submitButton,
-            isSubmitting && styles.submitButtonDisabled
-          ]}
+          style={styles.submitButtonWrapper}
           onPress={handleSubmit}
           disabled={isSubmitting}
+          activeOpacity={0.8}
         >
-          {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-              <Text style={styles.submitButtonText}>Lưu chỉ số sức khỏe</Text>
-            </>
-          )}
+          <LinearGradient
+            colors={isSubmitting ? ['#9e9e9e', '#757575'] : ['#43e97b', '#38f9d7']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.submitButton}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={22} color="#FFFFFF" />
+                <Text style={styles.submitButtonText}>Lưu chỉ số sức khỏe</Text>
+              </>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -219,30 +235,37 @@ export default function AddHealthIndex() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 30,
     flex: 1,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: '#f8fafc',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingTop: 36,
+    shadowColor: '#4facfe',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 10,
   },
   resetButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 10,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    letterSpacing: 0.3,
   },
   placeholder: {
     width: 40,
@@ -253,112 +276,136 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: '#E3F2FD',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
     marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4facfe',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: '#1976D2',
+    color: '#475569',
     marginLeft: 12,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   inputField: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   fieldHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   fieldIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   fieldInfo: {
     flex: 1,
   },
   fieldLabel: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 2,
+    color: '#1e293b',
+    marginBottom: 3,
   },
   requiredMark: {
-    color: '#FF5252',
+    color: '#f43f5e',
     fontSize: 15,
     fontWeight: 'bold',
   },
   fieldRange: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#64748b',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    paddingHorizontal: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputContainerEmpty: {
-    borderColor: '#FFA726',
-    backgroundColor: '#FFF3E0',
+    borderColor: '#fb923c',
+    backgroundColor: '#fff7ed',
   },
   inputContainerError: {
-    borderColor: '#FF5252',
-    backgroundColor: '#FFEBEE',
+    borderColor: '#f43f5e',
+    backgroundColor: '#fff1f2',
   },
   input: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 16,
     fontSize: 16,
-    color: '#333',
+    color: '#1e293b',
+    fontWeight: '500',
   },
   inputUnit: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#64748b',
+    fontWeight: '600',
     marginLeft: 8,
-    minWidth: 40,
+    minWidth: 45,
   },
   errorText: {
     fontSize: 12,
-    color: '#FF5252',
-    marginTop: 4,
-    marginLeft: 48,
+    color: '#f43f5e',
+    marginTop: 6,
+    marginLeft: 54,
+    fontWeight: '500',
   },
   requiredText: {
     fontSize: 12,
-    color: '#FFA726',
-    marginTop: 4,
-    marginLeft: 48,
+    color: '#fb923c',
+    marginTop: 6,
+    marginLeft: 54,
     fontStyle: 'italic',
+  },
+  submitButtonWrapper: {
+    marginTop: 12,
+    marginBottom: 40,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#43e97b',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
   submitButton: {
     flexDirection: 'row',
-    backgroundColor: '#4CAF50',
-    borderRadius: 12,
-    padding: 16,
+    padding: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 32,
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#CCCCCC',
   },
   submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    letterSpacing: 0.5,
   },
 });

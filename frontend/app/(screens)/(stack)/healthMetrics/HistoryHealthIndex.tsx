@@ -4,11 +4,13 @@ import {
 } from '@/constants/HealthIndexConstants';
 import { useHealthIndexes } from '@/context/HealthIndexContext';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   ActivityIndicator,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -77,9 +79,14 @@ export default function HistoryHealthIndex() {
         <View style={styles.metricsGrid}>
           {metrics.map((metric, idx) => (
             <View key={idx} style={styles.metricItem}>
-              <View style={[styles.metricIcon, { backgroundColor: metric.color }]}>
-                <Ionicons name={metric.icon as any} size={18} color="#FFFFFF" />
-              </View>
+              <LinearGradient
+                colors={[metric.color, metric.color + 'cc']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.metricIcon}
+              >
+                <Ionicons name={metric.icon as any} size={20} color="#fff" />
+              </LinearGradient>
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>{metric.label}</Text>
                 <Text style={styles.metricValue}>
@@ -95,18 +102,24 @@ export default function HistoryHealthIndex() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <StatusBar barStyle="light-content" backgroundColor="#667eea" translucent />
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.header}
+      >
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Lịch sử chỉ số sức khỏe</Text>
         <TouchableOpacity 
           onPress={() => router.push("/(screens)/(stack)/healthMetrics/AddHealthIndex" as any)}
           style={styles.addButton}
         >
-          <Ionicons name="add-circle" size={24} color="#4CAF50" />
+          <Ionicons name="add-circle" size={28} color="#fff" />
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isLoading ? (
@@ -137,138 +150,160 @@ export default function HistoryHealthIndex() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 40,
     flex: 1,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: '#f8fafc',
   },
   header: {
+    paddingTop: 36,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 10,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    letterSpacing: 0.3,
   },
   addButton: {
-    padding: 8,
+    padding: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 10,
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: 20,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#666',
+    marginTop: 16,
+    fontSize: 15,
+    color: '#64748b',
+    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
-    textAlign: 'center',
+    paddingVertical: 80,
     paddingHorizontal: 32,
   },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#475569',
+    marginTop: 20,
+  },
+  emptySubText: {
+    fontSize: 15,
+    color: '#94a3b8',
+    marginTop: 12,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
   totalText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#64748b',
+    marginBottom: 20,
+    fontWeight: '600',
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 18,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 5,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    marginBottom: 18,
+    paddingBottom: 14,
+    borderBottomWidth: 2,
+    borderBottomColor: '#f1f5f9',
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
   dateText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#475569',
     marginLeft: 6,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    justifyContent: 'space-between',
   },
   metricItem: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '48%',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
   metricIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   metricInfo: {
     flex: 1,
   },
   metricLabel: {
     fontSize: 11,
-    color: '#666',
-    marginBottom: 2,
+    color: '#64748b',
+    marginBottom: 4,
+    fontWeight: '500',
   },
   metricValue: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1e293b',
   },
   metricUnit: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'normal',
-    color: '#666',
+    color: '#64748b',
   },
 });

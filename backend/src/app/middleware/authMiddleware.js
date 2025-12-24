@@ -14,9 +14,14 @@ const authMiddleware = async (req, res, next) => {
             // Sử dụng cùng một JWT_SECRET mà bạn đã dùng để tạo token lúc đăng nhập
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // 4. Tìm người dùng trong database bằng ID từ token đã giải mã
-            // `-password` để loại bỏ trường password khỏi kết quả trả về
-            req.user = await User.findById(decoded.id).select('-password');
+            const user = await User.findById(decoded.id).select('-password');
+            req.user = {
+                id: user._id.toString(),
+                _id: user._id,
+                email: user.email,
+                username: user.username,
+                role: user.role
+            };
 
             // 5. Đi tiếp tới controller
             next();

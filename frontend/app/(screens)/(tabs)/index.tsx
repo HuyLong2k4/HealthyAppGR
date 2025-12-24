@@ -1,14 +1,15 @@
-import Feature from "@/components/stacks/Feature"
 import StatBox from "@/components/stacks/StatBox"
 import { CategoryColors, CategoryIcons, UnitLabels } from "@/constants/DailyGoalConstants"
 import { HealthIndexType, getHealthIndexConfig } from "@/constants/HealthIndexConstants"
 import { useCourse } from "@/context/CourseContext"
 import { GoalStatus, useDailyGoal } from "@/context/DailyGoalContext"
 import { useHealthIndexes } from "@/context/HealthIndexContext"
-import { Ionicons } from "@expo/vector-icons"
+import { FontAwesome5, Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
+import { LinearGradient } from "expo-linear-gradient"
 import { router } from "expo-router"
 import React, { useCallback, useEffect, useState } from "react"
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 // Hàm lấy ngày hôm nay
 const getTodayString = () => {
@@ -43,11 +44,15 @@ const HomeScreen = () => {
     await getGoalsForWeek(week.monday, week.sunday);
   }, [getGoalsForWeek]);
 
-  useEffect(() => {
-    refreshHealthIndexes();
-    refreshCourses();
-    loadTodayGoals();
-  }, [refreshHealthIndexes, refreshCourses, loadTodayGoals]);
+  // Refresh data mỗi khi vào màn hình
+  useFocusEffect(
+    useCallback(() => {
+      refreshHealthIndexes();
+      refreshCourses();
+      loadTodayGoals();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []) // Empty deps - chạy mỗi khi focus, ignore warning
+  );
 
   useEffect(() => {
     // Filter goals for today
@@ -67,27 +72,48 @@ const HomeScreen = () => {
     router.push("/(screens)/(stack)/setTarget/WeeklyGoals" as any);
   };
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.bannerContainer}>
-  <Image
-    source={require("../../../assets/images/banner1.jpg")}
-    style={styles.bannerImage}
-  />
-  <View style={styles.bannerOverlay}>
-    <Text style={styles.bannerText}>Chào mừng bạn trở lại!</Text>
-  </View>
-</View>
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.4)" translucent />
+      <ScrollView style={styles.container}>
+        {/* Header */}
+        <View style={styles.bannerContainer}>
+        <Image
+          source={require("../../../assets/images/banner1.jpg")}
+          style={styles.bannerImage}
+        />
+        <View style={styles.bannerOverlay}>
+          <Text style={styles.greetingText}>Xin chào!</Text>
+          <Text style={styles.bannerText}>Chúc bạn một ngày tốt lành</Text>
+        </View>
+      </View>
 <View style={styles.body}>
   {/* Tính năng chính */}
       <Text style={styles.sectionTitle}>Tính năng chính</Text>
       <View style={styles.features}>
-        <TouchableOpacity>
-          <Feature icon="list" text="Chươngtrình" nameScreen="category"/>
+        <TouchableOpacity onPress={() => router.push('/(screens)/(stack)/chat/message')} style={styles.featureCard}>
+          <LinearGradient colors={['#183cd9ff', '#183cd9ff']} style={styles.featureIconContainer}>
+            <FontAwesome5 name="comments" size={24} color="#fff" />
+          </LinearGradient>
+          <Text style={styles.featureText}>Chat với AI</Text>
         </TouchableOpacity>
-        <Feature icon="user-friends" text="Theo dõiSK" nameScreen="category"/>
-        <Feature icon="book" text="Nhật kí" nameScreen="category"/>
-        <Feature icon="lightbulb" text="Cẩm nang" nameScreen="category"/>
+        <TouchableOpacity onPress={() => router.push('/(screens)/(stack)/appointment/selectDoctor')} style={styles.featureCard}>
+          <LinearGradient colors={['#f5576c', '#f5576c']} style={styles.featureIconContainer}>
+            <FontAwesome5 name="user-friends" size={24} color="#fff" />
+          </LinearGradient>
+          <Text style={styles.featureText}>Đặt lịch khám</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/(screens)/(stack)/appointment/myAppointments')} style={styles.featureCard}>
+          <LinearGradient colors={['#00f2fe', '#00f2fe']} style={styles.featureIconContainer}>
+            <FontAwesome5 name="book" size={24} color="#fff" />
+          </LinearGradient>
+          <Text style={styles.featureText}>Lịch hẹn</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/(screens)/(stack)/notification')} style={styles.featureCard}>
+          <LinearGradient colors={['#fa709a', '#fa709a']} style={styles.featureIconContainer}>
+            <FontAwesome5 name="bell" size={24} color="#fff" />
+          </LinearGradient>
+          <Text style={styles.featureText}>Thông báo</Text>
+        </TouchableOpacity>
       </View>
        {/* Thiết lập mục tiêu tuần */}
       <Text style={styles.sectionTitle}>Mục tiêu hôm nay</Text>
@@ -158,7 +184,15 @@ const HomeScreen = () => {
       </View>
       {healthIndexes && healthIndexes.length > 0 ? (
         <View style={styles.healthStats}>
-          {healthIndexes.slice(-1).map((healthIndex: any, idx: number) => {
+          {healthIndexes
+            .sort((a: any, b: any) => {
+              // Sort theo recordedTime tăng dần (cũ → mới)
+              const timeA = new Date(a.recordedTime || a.createdAt).getTime();
+              const timeB = new Date(b.recordedTime || b.createdAt).getTime();
+              return timeA - timeB;
+            })
+            .slice(-1) // Lấy phần tử cuối cùng (mới nhất)
+            .map((healthIndex: any, idx: number) => {
             // Convert backend fields to display format
             const metrics = [];
             
@@ -266,6 +300,7 @@ const HomeScreen = () => {
       )}
 </View>
     </ScrollView>
+    </>
   )
 }
 
@@ -273,15 +308,14 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   bannerContainer: {
     position: "relative",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 35,
+    borderBottomRightRadius: 35,
     overflow: "hidden",
-    marginTop: 35,
-    height: 220,
+    height: 200,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 15,
   },
   bannerImage: {
@@ -295,20 +329,29 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
     justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: 25,
+  },
+  greetingText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   bannerText: {
     color: "#fff",
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   container: {
-    backgroundColor: "#F5F7FA",
+    backgroundColor: "#f8fafc",
   },
   body: {
     margin: 20,
@@ -323,90 +366,112 @@ const styles = StyleSheet.create({
     paddingLeft: 5,
   },
   sectionTitle: {
-    fontSize: 18,
+    marginTop: 24,
+    marginBottom: 16,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#2D3748",
+    color: "#1e293b",
+    letterSpacing: 0.3,
   },
   viewAllText: {
     fontSize: 14,
-    color: "#4285F4",
+    color: "#4facfe",
     fontWeight: "600",
   },
   features: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 10,
-    backgroundColor: "#FFFFFF",
-    padding: 15,
-    borderRadius: 15,
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+  },
+  featureCard: {
+    width: "48%",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+    marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  featureIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  featureText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
+    textAlign: "center",
   },
   weekGoal: {
-    marginTop: 15,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    padding: 20,
-    borderRadius: 15,
+    marginTop: 8,
+    backgroundColor: "#fff",
+    borderWidth: 0,
+    padding: 28,
+    borderRadius: 20,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   weekGoalText: {
     textAlign: "center",
-    marginBottom: 15,
-    color: "#4A5568",
+    marginTop: 12,
+    marginBottom: 20,
+    color: "#64748b",
     fontSize: 15,
     lineHeight: 22,
   },
   goalButton: {
-    backgroundColor: "#4285F4",
-    paddingVertical: 12,
-    paddingHorizontal: 35,
-    borderRadius: 25,
-    margin: 20,
-    shadowColor: "#4285F4",
+    backgroundColor: "#4facfe",
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    shadowColor: "#4facfe",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowRadius: 8,
+    elevation: 6,
   },
   goalButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 15,
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
   healthStats: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 15,
+    marginTop: 8,
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    padding: 15,
-    borderRadius: 15,
+    backgroundColor: "#fff",
+    padding: 18,
+    borderRadius: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   goalsContainer: {
-    marginTop: 15,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 15,
-    padding: 15,
+    marginTop: 8,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 18,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   goalsHeader: {
     flexDirection: "row",
@@ -417,55 +482,56 @@ const styles = StyleSheet.create({
   goalsTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2D3748",
+    color: "#1e293b",
   },
   goalItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: "#f1f5f9",
   },
   goalIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 14,
   },
   goalContent: {
     flex: 1,
   },
   goalName: {
     fontSize: 15,
-    fontWeight: "500",
-    color: "#333",
-    marginBottom: 2,
+    fontWeight: "600",
+    color: "#334155",
+    marginBottom: 4,
   },
   completedText: {
     textDecorationLine: "line-through",
-    color: "#999",
+    color: "#94a3b8",
   },
   goalQuantity: {
     fontSize: 13,
-    color: "#666",
+    color: "#64748b",
   },
   checkButton: {
     padding: 5,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 2,
-    borderColor: "#ddd",
+    borderColor: "#cbd5e1",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fff",
   },
   checkboxCompleted: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
+    backgroundColor: "#10b981",
+    borderColor: "#10b981",
   },
 })
 

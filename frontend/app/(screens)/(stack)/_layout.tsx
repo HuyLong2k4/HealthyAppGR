@@ -9,6 +9,7 @@ export default function _layoutStack() {
     }}
     >
       <Stack.Screen name="login/index" options={{ headerShown: false }} />
+      <Stack.Screen name="appointment" options={{ headerShown: false }} />
    </Stack>
   )
 }

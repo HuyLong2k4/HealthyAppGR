@@ -4,12 +4,12 @@ const bcrypt = require('bcryptjs');
 class UserService {
 
   /**
-   * Tạo người dùng mới với vai trò mặc định là 'PATIENT' và băm mật khẩu.
-   * @param {object} userData - Dữ liệu người dùng từ request body (ví dụ: username, email, password).
+   * Tạo người dùng mới với vai trò từ userData hoặc mặc định là 'PATIENT' và băm mật khẩu.
+   * @param {object} userData - Dữ liệu người dùng từ request body (ví dụ: username, email, password, role).
    */
   static async createUser(userData) {
     // Lấy các thông tin cần thiết từ userData
-    const { username, email, phone, password, dob } = userData;
+    const { username, email, phone, password, dob, role } = userData;
 
     // KIỂM TRA QUAN TRỌNG: Kiểm tra xem username hoặc email đã tồn tại chưa
     // Mongoose `unique: true` sẽ báo lỗi, nhưng kiểm tra trước sẽ cho thông báo thân thiện hơn.
@@ -24,15 +24,14 @@ class UserService {
     const passwordHash = await bcrypt.hash(password, salt);
     const defaultAvatarUrl = `https://api.dicebear.com/8.x/initials/png?seed=${username}`;
 
-    // LOGIC CHÍNH: Tạo người dùng mới và GÁN VAI TRÒ MẶC ĐỊNH
-    // Chúng ta tạo một đối tượng mới, chỉ lấy các trường cần thiết và
-    // gán cứng `role` thành 'PATIENT'.
-    // Điều này đảm bảo người dùng không thể tự gán vai trò khác khi đăng ký.
+    // LOGIC CHÍNH: Tạo người dùng mới
+    // Nếu không có imageURL thì dùng avatar mặc định
+    // Nếu không có role thì gán mặc định là 'PATIENT'
     const newUser = new User({
-      ...userData,      // Sao chép các trường khác như dob, gender...
+      ...userData,      // Sao chép các trường khác như dob, gender, role...
       passwordHash,     // Sử dụng mật khẩu đã băm
-      imageURL: defaultAvatarUrl,
-      role: 'PATIENT'   // Gán vai trò mặc định
+      imageURL: userData.imageURL || defaultAvatarUrl,
+      role: role || 'PATIENT'   // Dùng role từ userData hoặc mặc định PATIENT
     });
 
     // Lưu người dùng vào cơ sở dữ liệu

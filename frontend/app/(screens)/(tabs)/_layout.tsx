@@ -19,11 +19,6 @@ const _layoutTabs = () => {
                 title: 'Program',
                 tabBarIconName: 'grid',
             }}/>
-            <Tabs.Screen name='message' options={{
-                headerShown: false,
-                title: 'Mesage',
-                tabBarIconName: 'message-circle',
-            }}/>
             <Tabs.Screen name='setting' options={{
                 headerShown : false,
                 title: 'Account',

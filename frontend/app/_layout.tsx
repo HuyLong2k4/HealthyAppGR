@@ -1,9 +1,14 @@
+import { AppointmentProvider } from '@/context/AppointmentContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { ChatProvider } from '@/context/ChatContext';
 import { CourseProvider } from '@/context/CourseContext';
 import { DailyGoalProvider } from '@/context/DailyGoalContext';
+import { DoctorProvider } from '@/context/DoctorContext';
 import { EnrollmentProvider } from '@/context/EnrollmentContext';
 import { HealthIndexProvider } from '@/context/HealthIndexContext';
 import { LessonProvider } from '@/context/LessonContext';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { UserProvider } from '@/context/UserContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import React from 'react';
@@ -38,25 +43,35 @@ export default function RootLayout() {
 
     return (
         <AuthProvider>
-            <DailyGoalProvider>
-                <CourseProvider>
-                    <EnrollmentProvider>
-                        <LessonProvider>
-                            <HealthIndexProvider>
-                                <ThemeProvider 
-                                    value={colorScheme === 'dark' ? MyDarkTheme : MyLightTheme}
-                                >
-                                    <Stack>
-                                        <Stack.Screen name="(screens)" options={{ headerShown: false }} />
-                                        <Stack.Screen name="+not-found" />
-                                    </Stack>
-                                    <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} /> 
-                                </ThemeProvider>
-                            </HealthIndexProvider>
-                        </LessonProvider>
-                    </EnrollmentProvider>
-                </CourseProvider>
-            </DailyGoalProvider>
+            <UserProvider>
+                <DoctorProvider>
+                    <AppointmentProvider>
+                        <DailyGoalProvider>
+                            <CourseProvider>
+                                <EnrollmentProvider>
+                                    <LessonProvider>
+                                        <HealthIndexProvider>
+                                            <ChatProvider>
+                                                <NotificationProvider>
+                                                    <ThemeProvider 
+                                                        value={colorScheme === 'dark' ? MyDarkTheme : MyLightTheme}
+                                                    >
+                                                        <Stack>
+                                                            <Stack.Screen name="(screens)" options={{ headerShown: false }} />
+                                                            <Stack.Screen name="+not-found" />
+                                                        </Stack>
+                                                        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} /> 
+                                                    </ThemeProvider>
+                                                </NotificationProvider>
+                                            </ChatProvider>
+                                        </HealthIndexProvider>
+                                    </LessonProvider>
+                                </EnrollmentProvider>
+                            </CourseProvider>
+                        </DailyGoalProvider>
+                    </AppointmentProvider>
+                </DoctorProvider>
+            </UserProvider>
         </AuthProvider>
     );
 }
