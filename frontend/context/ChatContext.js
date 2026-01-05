@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 
 const ChatContext = createContext();
@@ -11,15 +11,28 @@ const BACKEND_API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export const ChatProvider = ({ children }) => {
   const { user, token } = useAuth();
-  const userId = user?._id || 'guest';
+  const userId = user?.id || user?._id || 'guest';
+  
+  // Use ref to track current userId to prevent race conditions
+  const currentUserIdRef = useRef(userId);
   
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Update ref whenever userId changes
+  useEffect(() => {
+    currentUserIdRef.current = userId;
+    console.log(`[ChatContext] User changed to: ${userId}`);
+  }, [userId]);
 
   // Load chat history from backend when user changes
   useEffect(() => {
     // Reset state when user changes
     setMessages([]);
+    
+    // Create AbortController to cancel request if component unmounts or userId changes
+    const abortController = new AbortController();
+    let isCurrentRequest = true; // Flag to track if this is still the current request
     
     const loadChatHistory = async () => {
       console.log('Loading chat for userId:', userId);
@@ -30,13 +43,19 @@ export const ChatProvider = ({ children }) => {
           const key = `chat_history_${userId}`;
           const savedChat = await AsyncStorage.getItem(key);
           
-          if (savedChat) {
-            setMessages(JSON.parse(savedChat));
-          } else {
-            setMessages([]);
+          // Only update state if this is still the current request
+          if (isCurrentRequest) {
+            if (savedChat) {
+              setMessages(JSON.parse(savedChat));
+            } else {
+              setMessages([]);
+            }
           }
         } catch (error) {
           console.error('Error loading guest chat:', error);
+          if (isCurrentRequest) {
+            setMessages([]);
+          }
         }
         return;
       }
@@ -49,11 +68,27 @@ export const ChatProvider = ({ children }) => {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
+          signal: abortController.signal, // Add abort signal
         });
+
+        // Only process response if this is still the current request
+        if (!isCurrentRequest) {
+          console.log('Ignoring stale response for old userId');
+          return;
+        }
 
         if (response.ok) {
           const data = await response.json();
           console.log('Loaded messages:', data.length, 'messages for user:', userId);
+          
+          // Verify the messages belong to the current user
+          if (data.length > 0 && data[0].user && data[0].user !== userId) {
+            console.error('⚠️ SECURITY WARNING: Received messages for different user!');
+            console.error('Expected userId:', userId);
+            console.error('Received userId:', data[0].user);
+            setMessages([]);
+            return;
+          }
           
           if (data.length === 0) {
             // No chat history - show welcome message
@@ -79,17 +114,37 @@ export const ChatProvider = ({ children }) => {
           setMessages([]);
         }
       } catch (error) {
+        // Ignore abort errors (they're expected when component unmounts)
+        if (error.name === 'AbortError') {
+          console.log('Request aborted for userId:', userId);
+          return;
+        }
         console.error('Error loading chat history from backend:', error);
-        setMessages([]);
+        if (isCurrentRequest) {
+          setMessages([]);
+        }
       }
     };
 
     loadChatHistory();
+    
+    // Cleanup function: cancel request and mark as stale
+    return () => {
+      isCurrentRequest = false;
+      abortController.abort();
+    };
   }, [userId, token]);
 
   // Send message to Gemini AI
   const sendMessage = async (userMessage) => {
     if (!userMessage.trim()) return;
+
+    // ⚠️ CRITICAL: Capture current user/token at the time of sending
+    // Don't rely on closure values which might be stale
+    const currentUserId = user?.id || user?._id || 'guest';
+    const currentToken = token;
+    
+    console.log(`[sendMessage] Sending message for user: ${currentUserId}`);
 
     // Add user message
     const newUserMessage = {
@@ -188,13 +243,14 @@ Assistant:`;
 
       setMessages(prev => [...prev, newAiMessage]);
       
-      // Save to backend if logged in
-      if (userId !== 'guest' && token) {
+      // Save to backend if logged in - USE CURRENT VALUES!
+      if (currentUserId !== 'guest' && currentToken) {
+        console.log(`[sendMessage] Saving chat to backend for user: ${currentUserId}`);
         try {
           const response = await fetch(`${BACKEND_API_URL}/messages/chat`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${currentToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -205,17 +261,20 @@ Assistant:`;
           });
 
           if (response.ok) {
-            console.log('Chat saved to backend');
+            const savedData = await response.json();
+            console.log(`[sendMessage] Chat saved successfully for user: ${currentUserId}`);
           } else {
-            console.error('Failed to save chat to backend');
+            const errorText = await response.text();
+            console.error(`[sendMessage] Failed to save chat to backend. Status: ${response.status}, Error: ${errorText}`);
           }
         } catch (error) {
-          console.error('Error saving to backend:', error);
+          console.error('[sendMessage] Error saving to backend:', error);
         }
       } else {
         // Guest mode - save to AsyncStorage
+        console.log(`[sendMessage] Saving to AsyncStorage for guest: ${currentUserId}`);
         const updatedMessages = [...messages, newUserMessage, newAiMessage];
-        await AsyncStorage.setItem(`chat_history_${userId}`, JSON.stringify(updatedMessages));
+        await AsyncStorage.setItem(`chat_history_${currentUserId}`, JSON.stringify(updatedMessages));
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -231,10 +290,10 @@ Assistant:`;
 
       setMessages(prev => [...prev, errorMessage]);
       
-      // Save error to AsyncStorage for guest only
-      if (userId === 'guest') {
+      // Save error to AsyncStorage for guest only - USE CURRENT VALUES!
+      if (currentUserId === 'guest') {
         const updatedMessages = [...messages, newUserMessage, errorMessage];
-        await AsyncStorage.setItem(`chat_history_${userId}`, JSON.stringify(updatedMessages));
+        await AsyncStorage.setItem(`chat_history_${currentUserId}`, JSON.stringify(updatedMessages));
       }
     } finally {
       setIsLoading(false);
@@ -243,27 +302,35 @@ Assistant:`;
 
   // Clear chat history
   const clearChat = async () => {
+    // Capture current values
+    const currentUserId = user?.id || user?._id || 'guest';
+    const currentToken = token;
+    
+    console.log(`[clearChat] Clearing chat for user: ${currentUserId}`);
+    
     setMessages([]);
     
     // Clear from backend if logged in
-    if (userId !== 'guest' && token) {
+    if (currentUserId !== 'guest' && currentToken) {
       try {
         await fetch(`${BACKEND_API_URL}/messages/all`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${currentToken}`,
             'Content-Type': 'application/json',
           },
         });
+        console.log(`[clearChat] Backend cleared for user: ${currentUserId}`);
       } catch (error) {
-        console.error('Error clearing chat from backend:', error);
+        console.error('[clearChat] Error clearing chat from backend:', error);
       }
     } else {
       // Guest mode - clear AsyncStorage
       try {
-        await AsyncStorage.removeItem(`chat_history_${userId}`);
+        await AsyncStorage.removeItem(`chat_history_${currentUserId}`);
+        console.log(`[clearChat] AsyncStorage cleared for guest: ${currentUserId}`);
       } catch (error) {
-        console.error('Error clearing guest chat:', error);
+        console.error('[clearChat] Error clearing guest chat:', error);
       }
     }
   };

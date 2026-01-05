@@ -18,6 +18,7 @@ const doctorRoutes = require('./app/routes/doctorRoutes');
 const appointmentRoutes = require('./app/routes/appointmentRoutes');
 const messageRoutes = require('./app/routes/messageRoutes');
 const notificationRoutes = require('./app/routes/notificationRoutes');
+const debugRoutes = require('./app/routes/debugRoutes');
 
 connectDB();
 
@@ -48,6 +49,12 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// Debug routes (Admin only)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/debug', debugRoutes);
+  console.log('⚠️ Debug routes enabled at /api/debug');
+}
+
 app.listen(PORT, "0.0.0.0", () =>
-  console.log(`Server listening on http://192.168.1.111:${PORT}`)
+  console.log(`Server listening on http://192.168.1.5:${PORT}`)
 );

@@ -55,9 +55,24 @@ class MessageController {
   static async getChatHistory(req, res) {
     try {
       const limit = parseInt(req.query.limit) || 100;
-      const messages = await MessageService.getChatHistory(req.user.id, limit);
+      const userId = req.user.id;
+      
+      console.log(`[getChatHistory] Loading history for user: ${userId}`);
+      
+      const messages = await MessageService.getChatHistory(userId, limit);
+      
+      // Security check: verify all messages belong to the requesting user
+      const invalidMessages = messages.filter(msg => msg.user.toString() !== userId);
+      if (invalidMessages.length > 0) {
+        console.error(`⚠️ SECURITY ERROR: Found ${invalidMessages.length} messages not belonging to user ${userId}`);
+        return res.status(500).json({ 
+          message: 'Security error: Invalid message data' 
+        });
+      }
+      
       res.status(200).json(messages);
     } catch (error) {
+      console.error('[getChatHistory] Error:', error);
       res.status(400).json({ message: error.message });
     }
   }
@@ -69,9 +84,26 @@ class MessageController {
   static async getRecentMessages(req, res) {
     try {
       const limit = parseInt(req.query.limit) || 50;
-      const messages = await MessageService.getRecentMessages(req.user.id, limit);
+      const userId = req.user.id;
+      
+      console.log(`[getRecentMessages] Loading messages for user: ${userId}`);
+      
+      const messages = await MessageService.getRecentMessages(userId, limit);
+      
+      // Security check: verify all messages belong to the requesting user
+      const invalidMessages = messages.filter(msg => msg.user.toString() !== userId);
+      if (invalidMessages.length > 0) {
+        console.error(`⚠️ SECURITY ERROR: Found ${invalidMessages.length} messages not belonging to user ${userId}`);
+        return res.status(500).json({ 
+          message: 'Security error: Invalid message data' 
+        });
+      }
+      
+      console.log(`[getRecentMessages] Returning ${messages.length} messages for user: ${userId}`);
+      
       res.status(200).json(messages);
     } catch (error) {
+      console.error('[getRecentMessages] Error:', error);
       res.status(400).json({ message: error.message });
     }
   }

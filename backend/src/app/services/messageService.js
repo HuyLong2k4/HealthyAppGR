@@ -68,10 +68,14 @@ class MessageService {
       throw new Error('Invalid user ID');
     }
 
-    return await Message.find({ user: userId })
+    // Get messages sorted by createdAt DESC first
+    const messages = await Message.find({ user: userId })
       .sort({ createdAt: -1 })
       .limit(limit)
       .select('-__v');
+    
+    // Then reverse to get oldest to newest (chronological order for chat display)
+    return messages.reverse();
   }
 
   /**
